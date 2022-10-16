@@ -11,10 +11,9 @@ describe("Tournament Flow", async () => {
 
   it("epoch matches can be deployed", async () => {
     const addresses = await ethers.getSigners()
-    const winner = addresses[1]
-    await tournament.registerCompetitor(winner.address)
+    // Register six competitors
     await Promise.all(
-      Array.from(Array(5)).map(async (x, i) =>
+      Array.from(Array(6)).map(async (x, i) =>
         tournament.registerCompetitor(addresses[i + 1].address)
       )
     )
@@ -22,7 +21,18 @@ describe("Tournament Flow", async () => {
     await tournament.generateRoundMatches()
     const currentRound = await tournament.currentRound()
     assert.equal(currentRound.toNumber(), 1)
-    assert.equal((await tournament.currentRoundMatchesCount()).toNumber(), 3)
+    const currentRoundMatchCount = await tournament.currentRoundMatchesCount()
+    assert.equal(currentRoundMatchCount.toNumber(), 3)
+
+    // Declare a winner for each match
+    await Promise.all(
+      Array.from(Array(currentRoundMatchCount.toNumber())).map(async (x, i) => {
+        const matchAddress = await tournament.roundMatches(currentRound.toNumber() - 1, i)
+        const match = await ethers.getContractAt<TournamentMatch>("TournamentMatch", matchAddress)
+        const competitor = await match.competitors(0)
+        await match.declareWinner(competitor)
+      })
+    )
 
     // const matchAddress = await tournament.epocMatches(0)
     // const match = await ethers.getContractAt<TournamentMatch>("TournamentMatch", matchAddress)

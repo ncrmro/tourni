@@ -29,7 +29,6 @@ contract Tournament {
     uint256 public registrationCloseTime;
     uint256 public startTime;
     address[] public competitors;
-    //    TournamentMatch[] public epocMatches;
     TournamentMatch[][] public roundMatches;
 
     constructor(
