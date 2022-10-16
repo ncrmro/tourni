@@ -29,7 +29,8 @@ contract Tournament {
     uint256 public registrationCloseTime;
     uint256 public startTime;
     address[] public competitors;
-    TournamentMatch[] public epocMatches;
+    //    TournamentMatch[] public epocMatches;
+    TournamentMatch[][] public roundMatches;
 
     constructor(
         string memory _name,
@@ -51,22 +52,44 @@ contract Tournament {
         return competitors.length;
     }
 
-    function epocMatchCount() public view returns (uint) {
-        return epocMatches.length;
+    function currentRound() public view returns (uint) {
+        return roundMatches.length;
     }
 
-    /*
-    Iterate over competitors two at a time to generate the match contracts
-    */
-    function deployEpochMatches() public {
-        require(block.timestamp > registrationCloseTime, "Can't deploy tournament matches before registration close time");
-        uint8 matchIndex = 0;
+    function currentRoundMatchesCount() public view returns (uint) {
+        return roundMatches[currentRound() - 1].length;
+    }
 
-        while (matchIndex < competitors.length) {
-            TournamentMatch matchContractAddress = new TournamentMatch([competitors[matchIndex], competitors[matchIndex + 1]]);
-            epocMatches.push(matchContractAddress);
-            matchIndex = matchIndex + 2;
+
+    function generateRoundMatches() public {
+        require(block.timestamp > registrationCloseTime, "Can't deploy tournament matches before registration close time");
+        TournamentMatch[] memory currentRoundMatches = new TournamentMatch[](competitors.length / 2);
+        uint256 currentRoundMatchesIndex = 0;
+
+        if (this.currentRound() == 0) {
+            // Deploy epoch matches
+            uint8 matchIndex = 0;
+            while (matchIndex < competitors.length) {
+                TournamentMatch matchContractAddress = new TournamentMatch([competitors[matchIndex], competitors[matchIndex + 1]]);
+                currentRoundMatches[currentRoundMatchesIndex] = matchContractAddress;
+                currentRoundMatchesIndex++;
+                matchIndex = matchIndex + 2;
+            }
         }
+        //        else {
+        //            uint8 matchIndex = 0;
+        //            TournamentMatch[] memory lastRoundMatches = roundMatches[this.currentRound()];
+        //            while (matchIndex < lastRoundMatches.length) {
+        //                address winner1 = lastRoundMatches[matchIndex].winner;
+        //                address winner2 = lastRoundMatches[matchIndex + 1].winner;
+        //                TournamentMatch matchContractAddress = new TournamentMatch([winner1, winner2]);
+        //                roundMatches.push(matchContractAddress);
+        //                matchIndex = matchIndex + 2;
+        //            }
+        //        }
+
+
+        roundMatches.push(currentRoundMatches);
     }
 
     /*
