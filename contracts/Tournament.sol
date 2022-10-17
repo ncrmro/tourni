@@ -90,10 +90,9 @@ contract Tournament {
       // TODO this errors atm need to figure out how this works when there aren't enough matches to pair
       TournamentMatch[] memory lastRoundMatches = roundMatches[this.currentRound() - 1];
       while (matchIndex < lastRoundMatches.length) {
-        address winner1 = lastRoundMatches[matchIndex].winner.address;
-        address winner2 = lastRoundMatches[matchIndex + 1].winner.address;
-        TournamentMatch matchContractAddress = new TournamentMatch([winner1, winner2]);
-        currentRoundMatches[currentRoundMatchesIndex] = matchContractAddress;
+        address winner1 = lastRoundMatches[matchIndex].winner();
+        address winner2 = lastRoundMatches[matchIndex + 1].winner();
+        currentRoundMatches[currentRoundMatchesIndex] = new TournamentMatch([winner1, winner2]);
         currentRoundMatchesIndex++;
         matchIndex = matchIndex + 2;
       }

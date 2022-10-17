@@ -17,6 +17,7 @@ describe("Tournament Flow", async () => {
         tournament.registerCompetitor(addresses[i + 1].address)
       )
     )
+    console.log((await tournament.finalRound()).toNumber())
     assert.equal((await tournament.competitorCount()).toNumber(), 8)
     await tournament.generateRoundMatches()
     let currentRound = await tournament.currentRound()
