@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+//import "hardhat/console.sol";
+
 contract TournamentMatch {
   address[2] public competitors;
   address public winner;
@@ -68,11 +70,10 @@ contract Tournament {
       "Can't deploy tournament matches before registration close time"
     );
     TournamentMatch[] memory currentRoundMatches = new TournamentMatch[](competitors.length / 2);
+    uint8 matchIndex = 0;
     uint256 currentRoundMatchesIndex = 0;
-
     if (this.currentRound() == 0) {
       // Deploy epoch matches
-      uint8 matchIndex = 0;
       while (matchIndex < competitors.length) {
         TournamentMatch matchContractAddress = new TournamentMatch(
           [competitors[matchIndex], competitors[matchIndex + 1]]
@@ -81,18 +82,23 @@ contract Tournament {
         currentRoundMatchesIndex++;
         matchIndex = matchIndex + 2;
       }
+    } else {
+      /*
+        Iterate over last round matches and pair winners in new match
+        not sure if assigning roundMatches[this.currentRound() - 1] would increase gas cost
+        */
+      // TODO this errors atm need to figure out how this works when there aren't enough matches to pair
+      TournamentMatch[] memory lastRoundMatches = roundMatches[this.currentRound() - 1];
+      console.log("lastRoundMatches %s", lastRoundMatches.length);
+      while (matchIndex < lastRoundMatches.length) {
+        address winner1 = lastRoundMatches[matchIndex].winner.address;
+        address winner2 = lastRoundMatches[matchIndex + 1].winner.address;
+        TournamentMatch matchContractAddress = new TournamentMatch([winner1, winner2]);
+        currentRoundMatches[currentRoundMatchesIndex] = matchContractAddress;
+        currentRoundMatchesIndex++;
+        matchIndex = matchIndex + 2;
+      }
     }
-    //        else {
-    //            uint8 matchIndex = 0;
-    //            TournamentMatch[] memory lastRoundMatches = roundMatches[this.currentRound()];
-    //            while (matchIndex < lastRoundMatches.length) {
-    //                address winner1 = lastRoundMatches[matchIndex].winner;
-    //                address winner2 = lastRoundMatches[matchIndex + 1].winner;
-    //                TournamentMatch matchContractAddress = new TournamentMatch([winner1, winner2]);
-    //                roundMatches.push(matchContractAddress);
-    //                matchIndex = matchIndex + 2;
-    //            }
-    //        }
 
     roundMatches.push(currentRoundMatches);
   }
@@ -101,5 +107,5 @@ contract Tournament {
     In th event that a winner can not be determined or decided
     return all assets back to original accounts
     */
-  function unlockAssets() public {}
+  function unlockAssetsFallback() public {}
 }
