@@ -11,28 +11,37 @@ describe("Tournament Flow", async () => {
 
   it("epoch matches can be deployed", async () => {
     const addresses = await ethers.getSigners()
-    // Register six competitors
+    // Register 8 competitors
     await Promise.all(
-      Array.from(Array(6)).map(async (x, i) =>
+      Array.from(Array(8)).map(async (x, i) =>
         tournament.registerCompetitor(addresses[i + 1].address)
       )
     )
-    assert.equal((await tournament.competitorCount()).toNumber(), 6)
+    assert.equal((await tournament.competitorCount()).toNumber(), 8)
     await tournament.generateRoundMatches()
-    const currentRound = await tournament.currentRound()
+    let currentRound = await tournament.currentRound()
     assert.equal(currentRound.toNumber(), 1)
-    const currentRoundMatchCount = await tournament.currentRoundMatchesCount()
-    assert.equal(currentRoundMatchCount.toNumber(), 3)
+    let currentRoundMatchCount = await tournament.currentRoundMatchesCount()
+    assert.equal(currentRoundMatchCount.toNumber(), 4)
 
     // Declare a winner for each match
     await Promise.all(
-      Array.from(Array(currentRoundMatchCount.toNumber())).map(async (x, i) => {
+      Array.from(Array(currentRoundMatchCount.toNumber()), async (x, i) => {
         const matchAddress = await tournament.roundMatches(currentRound.toNumber() - 1, i)
         const match = await ethers.getContractAt<TournamentMatch>("TournamentMatch", matchAddress)
         const competitor = await match.competitors(0)
         await match.declareWinner(competitor)
+        const winner = await match.winner()
+        assert.isNotNull(winner)
       })
     )
+
+    // This should generate the second round of matches
+    await tournament.generateRoundMatches()
+    currentRound = await tournament.currentRound()
+    assert.equal(currentRound.toNumber(), 2)
+    currentRoundMatchCount = await tournament.currentRoundMatchesCount()
+    assert.equal(currentRoundMatchCount.toNumber(), 2)
 
     // const matchAddress = await tournament.epocMatches(0)
     // const match = await ethers.getContractAt<TournamentMatch>("TournamentMatch", matchAddress)
