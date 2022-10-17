@@ -89,7 +89,6 @@ contract Tournament {
         */
       // TODO this errors atm need to figure out how this works when there aren't enough matches to pair
       TournamentMatch[] memory lastRoundMatches = roundMatches[this.currentRound() - 1];
-      console.log("lastRoundMatches %s", lastRoundMatches.length);
       while (matchIndex < lastRoundMatches.length) {
         address winner1 = lastRoundMatches[matchIndex].winner.address;
         address winner2 = lastRoundMatches[matchIndex + 1].winner.address;
